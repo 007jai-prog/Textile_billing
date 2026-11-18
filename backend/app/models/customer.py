@@ -5,7 +5,7 @@ class CustomerCreate(BaseModel):
     name: str = Field(..., min_length=2)
     phone: str = Field(..., min_length=10, max_length=15)
     email: Optional[str] = ""
-    city: Optional[str] = "Chennai"
+    city: Optional[str] = "Salem"
     state: Optional[str] = "Tamil Nadu"
     address: Optional[str] = ""
     gstin: Optional[str] = ""

@@ -5,7 +5,7 @@ class StoreProfile(BaseModel):
     storeName: str
     tagline: Optional[str] = ""
     address: Optional[str] = ""
-    city: Optional[str] = "Chennai"
+    city: Optional[str] = "Salem"
     state: Optional[str] = "Tamil Nadu"
     stateCode: Optional[str] = "33"
     pincode: Optional[str] = "600001"

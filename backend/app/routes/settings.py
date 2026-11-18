@@ -20,7 +20,7 @@ def get_store_settings(store_id: str = Depends(get_current_store_id)):
                 "storeName": store.get("name", "Textile Retail Store"),
                 "tagline": "Authentic Textile & Apparel Store",
                 "address": store.get("address", ""),
-                "city": store.get("city", "Chennai"),
+                "city": store.get("city", "Salem"),
                 "state": store.get("state", "Tamil Nadu"),
                 "stateCode": "33",
                 "pincode": store.get("pincode", "600001"),

@@ -19,7 +19,7 @@ export const CustomerSelectModal = ({
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    city: 'Chennai',
+    city: 'Salem',
     state: 'Tamil Nadu',
     address: '',
     gstin: '',
@@ -215,7 +215,7 @@ export const CustomerSelectModal = ({
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="e.g. Chennai"
+                placeholder="e.g. Salem"
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
               />
             </div>

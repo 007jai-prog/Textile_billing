@@ -36,7 +36,7 @@ export default function OAuthCallback() {
       store_name: '',
       phone: '',
       store_address: '',
-      city: 'Chennai',
+      city: 'Salem',
       state: 'Tamil Nadu',
       gstin: ''
     }
@@ -106,7 +106,7 @@ export default function OAuthCallback() {
         store_name: formData.store_name.trim(),
         phone: formData.phone.trim(),
         store_address: formData.store_address.trim(),
-        city: formData.city.trim() || 'Chennai',
+        city: formData.city.trim() || 'Salem',
         state: formData.state.trim() || 'Tamil Nadu',
         gstin: formData.gstin.trim()
       };
@@ -243,7 +243,7 @@ export default function OAuthCallback() {
                     <Store className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
                     <input
                       type="text"
-                      placeholder="e.g. ChennaSilks T. Nagar"
+                      placeholder="e.g. Lady Avenue "
                       {...register('store_name', { required: 'Store name is required.' })}
                       className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border rounded-xl text-xs font-medium focus:outline-hidden"
                       style={{ borderColor: 'var(--theme-border)' }}
@@ -283,7 +283,7 @@ export default function OAuthCallback() {
                     </label>
                     <input
                       type="text"
-                      placeholder="Chennai"
+                      placeholder="Salem"
                       {...register('city')}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border rounded-xl text-xs font-medium focus:outline-hidden"
                       style={{ borderColor: 'var(--theme-border)' }}

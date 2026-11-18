@@ -8,7 +8,7 @@ const createDefaultFormData = () => ({
   name: '',
   category: 'Sarees',
   fabric: 'Kanchipuram Silk',
-  brand: 'ChennaSilks Heritage',
+  brand: 'Lady Avenue Heritage',
   hsn: '5007',
   mrp: 2999,
   price: 2199,
@@ -379,7 +379,7 @@ export const ProductModal = ({
               onChange={(event) =>
                 updateProductField('brand', event.target.value)
               }
-              placeholder="e.g. Ramraj, ChennaSilks"
+              placeholder="e.g. Ramraj, Lady Avenue"
               className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium focus:border-indigo-500 focus:outline-none"
             />
           </div>

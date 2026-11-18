@@ -39,7 +39,7 @@ export const authService = {
             phone: '9876543210',
             role: 'owner',
             store_id: 'static-store-001',
-            store_name: 'ChennaSilks Showroom'
+            store_name: 'Lady Avenue Showroom'
           }
         };
         if (rememberMe) {

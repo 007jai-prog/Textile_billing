@@ -50,7 +50,7 @@ export const Header = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileO
       case '/settings':
         return 'Store & Appearance Settings';
       default:
-        return 'ChennaSilks POS';
+        return 'Lady Avenue POS';
     }
   };
 
@@ -83,7 +83,7 @@ export const Header = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileO
               style={{ color: 'var(--theme-primary)' }}
             >
               <Building2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="truncate">{user?.store_name || settings?.store?.storeName || 'ChennaSilks Showroom'}</span>
+              <span className="truncate">{user?.store_name || settings?.store?.storeName || 'Lady Avenue Showroom'}</span>
             </span>
             <span className="hidden sm:inline">•</span>
             <span className="hidden sm:inline truncate">GSTIN: {settings?.store?.gstin || '33AABCS8899K1ZM'}</span>

@@ -20,12 +20,12 @@ def seed_default_admin(db):
         existing = db.users.find_one({"email": admin_email})
         if not existing:
             now_iso = datetime.now(timezone.utc).isoformat()
-            store = db.stores.find_one({"name": "ChennaSilks Showroom"})
+            store = db.stores.find_one({"name": "Lady Avenue Showroom"})
             if not store:
                 store_res = db.stores.insert_one({
-                    "name": "ChennaSilks Showroom",
+                    "name": "Lady Avenue Showroom",
                     "address": "124, Usman Road, T. Nagar",
-                    "city": "Chennai",
+                    "city": "Salem",
                     "state": "Tamil Nadu",
                     "stateCode": "33",
                     "pincode": "600017",
@@ -58,10 +58,10 @@ def seed_default_admin(db):
                 db.settings.insert_one({
                     "store_id": store_id,
                     "store": {
-                        "storeName": "ChennaSilks Showroom",
+                        "storeName": "Lady Avenue Showroom",
                         "tagline": "Authentic Textile & Apparel Store",
                         "address": "124, Usman Road, T. Nagar",
-                        "city": "Chennai",
+                        "city": "Salem",
                         "state": "Tamil Nadu",
                         "stateCode": "33",
                         "pincode": "600017",
@@ -107,7 +107,7 @@ def seed_initial_products(db, store_id: str):
                 "name": "Kanchipuram Pure Silk Wedding Saree",
                 "category": "Sarees",
                 "fabric": "Kanchipuram Silk",
-                "brand": "ChennaSilks Heritage",
+                "brand": "Lady Avenue Heritage",
                 "hsn": "5007",
                 "price": 15499.0,
                 "mrp": 18500.0,
@@ -127,7 +127,7 @@ def seed_initial_products(db, store_id: str):
                 "name": "Pure Linen Casual Shirt",
                 "category": "Men's Casual",
                 "fabric": "Linen",
-                "brand": "ChennaSilks Club",
+                "brand": "Lady Avenue Club",
                 "hsn": "6205",
                 "price": 1899.0,
                 "mrp": 2499.0,
@@ -148,7 +148,7 @@ def seed_initial_products(db, store_id: str):
                 "name": "Traditional Cotton Dhoti with Mayilkann Border",
                 "category": "Dhotis & Veshtis",
                 "fabric": "100% Combed Cotton",
-                "brand": "ChennaSilks Heritage",
+                "brand": "Lady Avenue Heritage",
                 "hsn": "5208",
                 "price": 899.0,
                 "mrp": 1200.0,
@@ -167,7 +167,7 @@ def seed_initial_products(db, store_id: str):
                 "name": "Chanderi Silk Anarkali Kurti",
                 "category": "Women's Kurtis",
                 "fabric": "Chanderi Silk",
-                "brand": "ChennaSilks Heritage",
+                "brand": "Lady Avenue Heritage",
                 "hsn": "6204",
                 "price": 2499.0,
                 "mrp": 3299.0,

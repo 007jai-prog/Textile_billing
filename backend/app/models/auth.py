@@ -8,7 +8,7 @@ class UserRegister(BaseModel):
     phone: str = Field(..., min_length=10, max_length=15)
     password: str = Field(..., min_length=6)
     store_address: Optional[str] = ""
-    city: Optional[str] = "Chennai"
+    city: Optional[str] = "Salem"
     state: Optional[str] = "Tamil Nadu"
     pincode: Optional[str] = "600001"
     gstin: Optional[str] = ""
@@ -44,7 +44,7 @@ class OAuthCompleteSetupPayload(BaseModel):
     store_name: str = Field(..., min_length=2, max_length=150)
     phone: str = Field(..., min_length=10, max_length=15)
     store_address: Optional[str] = ""
-    city: Optional[str] = "Chennai"
+    city: Optional[str] = "Salem"
     state: Optional[str] = "Tamil Nadu"
     pincode: Optional[str] = "600001"
     gstin: Optional[str] = ""

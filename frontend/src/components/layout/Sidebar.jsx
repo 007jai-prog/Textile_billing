@@ -77,7 +77,7 @@ export const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobile
 
           <div className="min-w-0 truncate">
             <h1 className="truncate text-sm font-bold tracking-wide text-white">
-              {user?.store_name || settings?.store?.storeName || 'ChennaSilks POS'}
+              {user?.store_name || settings?.store?.storeName || 'Lady Avenue POS'}
             </h1>
             <p className="flex items-center gap-1 truncate text-[11px] opacity-75">
               <Sparkles className="h-3 w-3 shrink-0 text-amber-400" />
