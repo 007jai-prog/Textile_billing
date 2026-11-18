@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -5,14 +6,10 @@ import {
   Receipt,
   RotateCcw,
   Save,
-  CheckCircle2,
   AlertTriangle,
-  Building,
-  Printer,
   Palette,
   Eye,
   Check,
-  Sparkles,
   ShieldCheck,
   Sun,
   Moon,
@@ -20,6 +17,7 @@ import {
   User,
   Crown
 } from 'lucide-react';
+
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { THEME_CATEGORIES } from '../data/themes';
@@ -28,25 +26,54 @@ import Badge from '../components/common/Badge';
 
 export const Settings = () => {
   const location = useLocation();
+
   const { settings, updateSettings, resetDemoData } = useApp();
+
   const {
     themes,
     currentThemeId,
     previewThemeId,
     activeTheme,
-    isLivePreviewing,
     mode,
     toggleMode,
     previewTheme,
-    revertPreview,
     saveTheme
   } = useTheme();
 
-  const [activeTab, setActiveTab] = useState(location.state?.tab || 'appearance');
+  const [activeTab, setActiveTab] = useState(
+    location.state?.tab || 'appearance'
+  );
+
   const [selectedThemeCategory, setSelectedThemeCategory] = useState('all');
   const [themeSearchQuery, setThemeSearchQuery] = useState('');
   const [formData, setFormData] = useState(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
+  // Theme-aware styles
+  const cardStyle = {
+    backgroundColor: 'var(--theme-bg-card)',
+    borderColor: 'var(--theme-border)',
+    color: 'var(--theme-text-main)'
+  };
+
+  const inputStyle = {
+    backgroundColor: 'var(--theme-bg-main)',
+    borderColor: 'var(--theme-border)',
+    color: 'var(--theme-text-main)',
+    colorScheme: mode === 'dark' ? 'dark' : 'light'
+  };
+
+  const labelStyle = {
+    color: 'var(--theme-text-muted)'
+  };
+
+  const headingStyle = {
+    color: 'var(--theme-text-main)'
+  };
+
+  const mutedTextStyle = {
+    color: 'var(--theme-text-muted)'
+  };
 
   useEffect(() => {
     if (settings) {
@@ -63,23 +90,23 @@ export const Settings = () => {
   if (!formData) return null;
 
   const handleStoreChange = (field, value) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       store: {
-        ...formData.store,
-        [field]: value,
+        ...prev.store,
+        [field]: value
       }
-    });
+    }));
   };
 
   const handleBillingChange = (field, value) => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       billing: {
-        ...formData.billing,
-        [field]: value,
+        ...prev.billing,
+        [field]: value
       }
-    });
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -87,38 +114,67 @@ export const Settings = () => {
     updateSettings(formData);
   };
 
-  // Filtered themes
-  const filteredThemes = themes.filter(t => {
-    const matchesCat = selectedThemeCategory === 'all' || t.category === selectedThemeCategory;
-    const q = themeSearchQuery.toLowerCase().trim();
-    if (!q) return matchesCat;
-    const matchesName = t.name.toLowerCase().includes(q);
-    const matchesSub = (t.subtitle || '').toLowerCase().includes(q);
-    const matchesDesc = t.description.toLowerCase().includes(q);
-    return matchesCat && (matchesName || matchesSub || matchesDesc);
+  // Filter themes
+  const filteredThemes = themes.filter(theme => {
+    const matchesCategory =
+      selectedThemeCategory === 'all' ||
+      theme.category === selectedThemeCategory;
+
+    const query = themeSearchQuery.toLowerCase().trim();
+
+    if (!query) return matchesCategory;
+
+    const matchesName = theme.name.toLowerCase().includes(query);
+    const matchesSubtitle = (theme.subtitle || '').toLowerCase().includes(query);
+    const matchesDescription = (theme.description || '').toLowerCase().includes(query);
+
+    return matchesCategory &&
+      (matchesName || matchesSubtitle || matchesDescription);
   });
 
+  // Reusable form input styles
+  const formInputClass =
+    'w-full px-3 py-2 rounded-lg text-xs font-medium border focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500';
+
+  const renderLabel = (text) => (
+    <label
+      className="block text-xs font-bold mb-1"
+      style={labelStyle}
+    >
+      {text}
+    </label>
+  );
+
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Top Banner */}
+    <div
+      className="space-y-6 max-w-6xl mx-auto"
+      style={headingStyle}
+    >
+
+      {/* TOP BANNER */}
+
       <div
         className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl border shadow-xs transition-colors"
-        style={{
-          backgroundColor: 'var(--theme-bg-card)',
-          borderColor: 'var(--theme-border)',
-          color: 'var(--theme-text-main)'
-        }}
+        style={cardStyle}
       >
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight">Showroom & POS Settings</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-bold tracking-tight">
+              Showroom & POS Settings
+            </h1>
+
             <Badge variant="primary" size="sm">
               <Crown className="w-3 h-3 mr-1 inline text-amber-500" />
               Enterprise Plan
             </Badge>
           </div>
-          <p className="text-xs opacity-75 mt-0.5">
-            Configure store profile, 21+ aesthetic themes, invoice formatting, and cash drawer settings
+
+          <p
+            className="text-xs mt-0.5"
+            style={mutedTextStyle}
+          >
+            Configure store profile, 21+ aesthetic themes, invoice formatting,
+            and cash drawer settings
           </p>
         </div>
 
@@ -135,33 +191,42 @@ export const Settings = () => {
         )}
       </div>
 
-      {/* Tabs */}
+      {/* TABS */}
+
       <div
         className="flex items-center gap-2 border-b overflow-x-auto pb-1"
         style={{ borderColor: 'var(--theme-border)' }}
       >
         {[
-          { id: 'appearance', label: 'Appearance & Themes (23)', icon: Palette, highlight: true },
+          { id: 'appearance', label: 'Appearance & Themes (23)', icon: Palette },
           { id: 'store', label: 'Store Profile', icon: Store },
           { id: 'billing', label: 'Billing & Invoice Template', icon: Receipt },
-          { id: 'demo', label: 'Demo Data Management', icon: RotateCcw },
+          { id: 'demo', label: 'Demo Data Management', icon: RotateCcw }
         ].map(tab => {
           const Icon = tab.icon;
           const isSelected = activeTab === tab.id;
+
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
                 isSelected
-                  ? 'border-indigo-600 font-extrabold'
+                  ? 'font-extrabold'
                   : 'border-transparent opacity-65 hover:opacity-100'
               }`}
-              style={isSelected ? {
-                borderColor: 'var(--theme-primary)',
-                color: 'var(--theme-primary)',
-                backgroundColor: 'var(--theme-primary-light, rgba(79, 70, 229, 0.08))'
-              } : {}}
+              style={{
+                borderColor: isSelected
+                  ? 'var(--theme-primary)'
+                  : 'transparent',
+                color: isSelected
+                  ? 'var(--theme-primary)'
+                  : 'var(--theme-text-muted)',
+                backgroundColor: isSelected
+                  ? 'var(--theme-primary-light)'
+                  : 'transparent'
+              }}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
@@ -170,67 +235,106 @@ export const Settings = () => {
         })}
       </div>
 
-      {/* TAB 1: APPEARANCE & THEMES */}
+      {/* =====================================
+          TAB 1: APPEARANCE & THEMES
+      ===================================== */}
+
       {activeTab === 'appearance' && (
         <div className="space-y-6">
-          {/* Header & Mode Switcher Card */}
+
+          {/* Header and Mode Switcher */}
+
           <div
             className="p-6 rounded-2xl border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
-            style={{
-              backgroundColor: 'var(--theme-bg-card)',
-              borderColor: 'var(--theme-border)'
-            }}
+            style={cardStyle}
           >
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs uppercase font-bold tracking-wider" style={{ color: 'var(--theme-primary)' }}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span
+                  className="text-xs uppercase font-bold tracking-wider"
+                  style={{ color: 'var(--theme-primary)' }}
+                >
                   Design System
                 </span>
+
                 <span>•</span>
-                <span className="text-xs opacity-70">Active: <strong>{activeTheme.name}</strong></span>
+
+                <span
+                  className="text-xs"
+                  style={mutedTextStyle}
+                >
+                  Active: <strong>{activeTheme.name}</strong>
+                </span>
               </div>
-              <h2 className="text-lg font-bold mt-1">21 Aesthetic Color Themes + Legacy Originals</h2>
-              <p className="text-xs opacity-75 mt-0.5 max-w-xl">
-                Select and live preview luxury, modern tech, or minimal aesthetic palettes. Changes apply consistently across POS billing, sidebars, cards, and tables.
+
+              <h2 className="text-lg font-bold mt-1">
+                21 Aesthetic Color Themes + Legacy Originals
+              </h2>
+
+              <p
+                className="text-xs mt-0.5 max-w-xl"
+                style={mutedTextStyle}
+              >
+                Select and live preview luxury, modern tech, or minimal
+                aesthetic palettes. Changes apply consistently across POS
+                billing, sidebars, cards, and tables.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
-              {/* Light / Dark Mode Toggle */}
+            <div className="flex items-center gap-3 shrink-0 flex-wrap">
+
+              {/* Light / Dark Toggle */}
+
               <div
                 className="flex items-center p-1 rounded-xl border text-xs font-semibold"
-                style={{ borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-bg-main)' }}
+                style={{
+                  borderColor: 'var(--theme-border)',
+                  backgroundColor: 'var(--theme-bg-main)'
+                }}
               >
                 <button
                   type="button"
                   onClick={() => mode === 'dark' && toggleMode()}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                    mode === 'light'
-                      ? 'bg-white text-slate-900 shadow-xs font-bold'
-                      : 'opacity-60 hover:opacity-100'
-                  }`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all"
+                  style={{
+                    backgroundColor: mode === 'light'
+                      ? 'var(--theme-bg-card)'
+                      : 'transparent',
+                    color: mode === 'light'
+                      ? 'var(--theme-text-main)'
+                      : 'var(--theme-text-muted)',
+                    fontWeight: mode === 'light' ? 700 : 500
+                  }}
                 >
                   <Sun className="w-3.5 h-3.5 text-amber-500" />
                   <span>Light</span>
                 </button>
+
                 <button
                   type="button"
                   onClick={() => mode === 'light' && toggleMode()}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-                    mode === 'dark'
-                      ? 'bg-slate-900 text-white shadow-xs font-bold'
-                      : 'opacity-60 hover:opacity-100'
-                  }`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all"
+                  style={{
+                    backgroundColor: mode === 'dark'
+                      ? 'var(--theme-bg-card)'
+                      : 'transparent',
+                    color: mode === 'dark'
+                      ? 'var(--theme-text-main)'
+                      : 'var(--theme-text-muted)',
+                    fontWeight: mode === 'dark' ? 700 : 500
+                  }}
                 >
                   <Moon className="w-3.5 h-3.5 text-indigo-400" />
                   <span>Dark</span>
                 </button>
               </div>
 
-              {/* Subscription Pill */}
               <div
                 className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border"
-                style={{ borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-bg-main)' }}
+                style={{
+                  borderColor: 'var(--theme-border)',
+                  backgroundColor: 'var(--theme-bg-main)'
+                }}
               >
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
                 <span>All 23 Themes Permitted</span>
@@ -238,28 +342,34 @@ export const Settings = () => {
             </div>
           </div>
 
-          {/* Theme Category Filters & Search */}
+          {/* Theme Category Filters and Search */}
+
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+
             <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 scrollbar-none">
-              {THEME_CATEGORIES.map(cat => {
-                const isSelected = selectedThemeCategory === cat.id;
+              {THEME_CATEGORIES.map(category => {
+                const isSelected =
+                  selectedThemeCategory === category.id;
+
                 return (
                   <button
-                    key={cat.id}
+                    key={category.id}
                     type="button"
-                    onClick={() => setSelectedThemeCategory(cat.id)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                      isSelected
-                        ? 'text-white shadow-xs'
-                        : 'border opacity-70 hover:opacity-100'
-                    }`}
-                    style={
-                      isSelected
-                        ? { backgroundColor: 'var(--theme-primary)' }
-                        : { borderColor: 'var(--theme-border)', backgroundColor: 'var(--theme-bg-card)' }
-                    }
+                    onClick={() => setSelectedThemeCategory(category.id)}
+                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border"
+                    style={{
+                      backgroundColor: isSelected
+                        ? 'var(--theme-primary)'
+                        : 'var(--theme-bg-card)',
+                      color: isSelected
+                        ? '#ffffff'
+                        : 'var(--theme-text-main)',
+                      borderColor: isSelected
+                        ? 'var(--theme-primary)'
+                        : 'var(--theme-border)'
+                    }}
                   >
-                    {cat.label}
+                    {category.label}
                   </button>
                 );
               })}
@@ -271,24 +381,28 @@ export const Settings = () => {
                 placeholder="Search 23 themes..."
                 value={themeSearchQuery}
                 onChange={(e) => setThemeSearchQuery(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl text-xs border focus:outline-hidden"
-                style={{
-                  backgroundColor: 'var(--theme-bg-card)',
-                  borderColor: 'var(--theme-border)',
-                  color: 'var(--theme-text-main)'
-                }}
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
           </div>
 
-          {/* Themes Grid */}
+          {/* Theme Cards */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
             {filteredThemes.map(theme => {
               const isCurrentSaved = currentThemeId === theme.id;
               const isCurrentlyPreviewing = previewThemeId === theme.id;
-              const isSelected = isCurrentlyPreviewing || (!previewThemeId && isCurrentSaved);
 
-              const colorSet = mode === 'dark' && theme.dark ? theme.dark : theme.colors;
+              const isSelected =
+                isCurrentlyPreviewing ||
+                (!previewThemeId && isCurrentSaved);
+
+              const colorSet =
+                mode === 'dark' && theme.dark
+                  ? theme.dark
+                  : theme.colors;
 
               return (
                 <div
@@ -298,92 +412,115 @@ export const Settings = () => {
                   }`}
                   style={{
                     backgroundColor: 'var(--theme-bg-card)',
-                    borderColor: isSelected ? 'var(--theme-primary)' : 'var(--theme-border)',
-                    boxShadow: isSelected ? '0 8px 24px -4px rgba(0,0,0,0.1)' : undefined
+                    borderColor: isSelected
+                      ? 'var(--theme-primary)'
+                      : 'var(--theme-border)',
+                    color: 'var(--theme-text-main)',
+                    boxShadow: isSelected
+                      ? '0 8px 24px -4px rgba(0,0,0,0.1)'
+                      : undefined
                   }}
                 >
-                  {/* Top Bar: Title & Badges */}
                   <div>
+
+                    {/* Theme Name */}
+
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
-                        <h3 className="font-bold text-sm leading-tight text-slate-900 dark:text-white">
+                        <h3 className="font-bold text-sm leading-tight">
                           {theme.name}
                         </h3>
+
                         {theme.subtitle && (
-                          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                          <span
+                            className="text-[11px] font-semibold"
+                            style={mutedTextStyle}
+                          >
                             {theme.subtitle}
                           </span>
                         )}
                       </div>
 
                       {isCurrentSaved ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shrink-0">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 shrink-0">
                           <Check className="w-3 h-3" />
                           <span>Active</span>
                         </span>
                       ) : isCurrentlyPreviewing ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 shrink-0 flex items-center gap-1">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 shrink-0 flex items-center gap-1">
                           <Eye className="w-3 h-3" />
                           <span>Preview</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 uppercase tracking-wider shrink-0">
+                        <span
+                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold border uppercase tracking-wider shrink-0"
+                          style={{
+                            backgroundColor: 'var(--theme-bg-main)',
+                            color: 'var(--theme-text-muted)',
+                            borderColor: 'var(--theme-border)'
+                          }}
+                        >
                           {theme.category}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
+                    <p
+                      className="text-xs leading-relaxed mb-4"
+                      style={mutedTextStyle}
+                    >
                       {theme.description}
                     </p>
 
-                    {/* Color Swatch Palette Preview (4 swatches) */}
-                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 mb-4">
-                      <div className="text-[10px] uppercase font-bold text-slate-400 mb-2 flex items-center justify-between">
-                        <span>Color Palette Tokens</span>
-                        <span className="font-mono">{colorSet.primary}</span>
+                    {/* Color Swatches */}
+
+                    <div
+                      className="p-3 rounded-xl border mb-4"
+                      style={{
+                        backgroundColor: 'var(--theme-bg-main)',
+                        borderColor: 'var(--theme-border)'
+                      }}
+                    >
+                      <div className="text-[10px] uppercase font-bold mb-2 flex items-center justify-between">
+                        <span style={mutedTextStyle}>
+                          Color Palette Tokens
+                        </span>
+
+                        <span className="font-mono">
+                          {colorSet.primary}
+                        </span>
                       </div>
 
                       <div className="grid grid-cols-4 gap-2">
-                        <div className="space-y-1 text-center">
+                        {[
+                          { label: 'Primary', color: colorSet.primary },
+                          { label: 'Canvas', color: colorSet.bgMain },
+                          { label: 'Sidebar', color: colorSet.bgSidebar },
+                          { label: 'Accent', color: colorSet.accent }
+                        ].map(swatch => (
                           <div
-                            className="h-8 rounded-lg shadow-2xs border border-black/10 transition-transform group-hover:scale-105"
-                            style={{ backgroundColor: colorSet.primary }}
-                            title={`Primary: ${colorSet.primary}`}
-                          />
-                          <span className="text-[9px] text-slate-400 font-mono block truncate">Primary</span>
-                        </div>
+                            key={swatch.label}
+                            className="space-y-1 text-center"
+                          >
+                            <div
+                              className="h-8 rounded-lg shadow-2xs border border-black/10"
+                              style={{ backgroundColor: swatch.color }}
+                              title={`${swatch.label}: ${swatch.color}`}
+                            />
 
-                        <div className="space-y-1 text-center">
-                          <div
-                            className="h-8 rounded-lg shadow-2xs border border-slate-300 dark:border-slate-700 transition-transform group-hover:scale-105"
-                            style={{ backgroundColor: colorSet.bgMain }}
-                            title={`Background: ${colorSet.bgMain}`}
-                          />
-                          <span className="text-[9px] text-slate-400 font-mono block truncate">Canvas</span>
-                        </div>
-
-                        <div className="space-y-1 text-center">
-                          <div
-                            className="h-8 rounded-lg shadow-2xs border border-black/10 transition-transform group-hover:scale-105"
-                            style={{ backgroundColor: colorSet.bgSidebar }}
-                            title={`Sidebar: ${colorSet.bgSidebar}`}
-                          />
-                          <span className="text-[9px] text-slate-400 font-mono block truncate">Sidebar</span>
-                        </div>
-
-                        <div className="space-y-1 text-center">
-                          <div
-                            className="h-8 rounded-lg shadow-2xs border border-black/10 transition-transform group-hover:scale-105"
-                            style={{ backgroundColor: colorSet.accent }}
-                            title={`Accent: ${colorSet.accent}`}
-                          />
-                          <span className="text-[9px] text-slate-400 font-mono block truncate">Accent</span>
-                        </div>
+                            <span
+                              className="text-[9px] font-mono block truncate"
+                              style={mutedTextStyle}
+                            >
+                              {swatch.label}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Interactive Miniature UI Mockup */}
+                    {/* Miniature UI Preview */}
+
                     <div
                       className="rounded-xl p-3 border mb-4 text-[11px] overflow-hidden"
                       style={{
@@ -398,13 +535,18 @@ export const Settings = () => {
                         >
                           POS
                         </div>
+
                         <div
                           className="h-2 rounded w-16"
                           style={{ backgroundColor: colorSet.border }}
                         />
+
                         <div
-                          className="ml-auto text-[9px] font-bold px-1.5 py-0.2 rounded"
-                          style={{ backgroundColor: colorSet.primaryLight, color: colorSet.primary }}
+                          className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: colorSet.primaryLight,
+                            color: colorSet.primary
+                          }}
                         >
                           ₹1,450
                         </div>
@@ -415,6 +557,7 @@ export const Settings = () => {
                           className="w-10 h-7 rounded-md"
                           style={{ backgroundColor: colorSet.bgSidebar }}
                         />
+
                         <div
                           className="flex-1 h-7 rounded-md flex items-center justify-center font-bold text-[9px] text-white shadow-2xs"
                           style={{ backgroundColor: colorSet.primary }}
@@ -425,43 +568,60 @@ export const Settings = () => {
                     </div>
                   </div>
 
-                  {/* Bottom Action Controls */}
-                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  {/* Theme Actions */}
+
+                  <div
+                    className="space-y-2 pt-2 border-t"
+                    style={{ borderColor: 'var(--theme-border)' }}
+                  >
                     <div className="grid grid-cols-2 gap-2">
+
                       <button
                         type="button"
                         onClick={() => previewTheme(theme.id)}
-                        className={`inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition-all ${
-                          isCurrentlyPreviewing
-                            ? 'bg-amber-500 text-white border-amber-600 font-bold'
-                            : 'border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                        }`}
+                        className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold border transition-all"
+                        style={isCurrentlyPreviewing
+                          ? {
+                              backgroundColor: '#f59e0b',
+                              color: '#ffffff',
+                              borderColor: '#d97706'
+                            }
+                          : {
+                              backgroundColor: 'var(--theme-bg-main)',
+                              color: 'var(--theme-text-main)',
+                              borderColor: 'var(--theme-border)'
+                            }
+                        }
                         title="Live preview across entire interface"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        <span>{isCurrentlyPreviewing ? 'Previewing' : 'Live Preview'}</span>
+                        <span>
+                          {isCurrentlyPreviewing ? 'Previewing' : 'Live Preview'}
+                        </span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => saveTheme(theme.id, false)}
-                        className={`inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white shadow-xs transition-all ${
-                          isCurrentSaved
-                            ? 'bg-emerald-600 hover:bg-emerald-500'
-                            : 'bg-indigo-600 hover:bg-indigo-500'
-                        }`}
-                        title="Apply and remember for my cashier/user session"
+                        className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold text-white shadow-xs transition-all"
+                        style={{
+                          backgroundColor: isCurrentSaved
+                            ? '#059669'
+                            : 'var(--theme-primary)'
+                        }}
                       >
                         <User className="w-3.5 h-3.5" />
-                        <span>{isCurrentSaved ? 'Saved' : 'Apply'}</span>
+                        <span>
+                          {isCurrentSaved ? 'Saved' : 'Apply'}
+                        </span>
                       </button>
                     </div>
 
-                    {/* Admin Action: Global Showroom Default */}
                     <button
                       type="button"
                       onClick={() => saveTheme(theme.id, true)}
-                      className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-medium text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-medium transition-colors"
+                      style={mutedTextStyle}
                       title="Set as the baseline default theme for all showroom terminals"
                     >
                       <Globe className="w-3 h-3" />
@@ -475,110 +635,144 @@ export const Settings = () => {
         </div>
       )}
 
-      {/* TAB 2: STORE PROFILE */}
+      {/* =====================================
+          TAB 2: STORE PROFILE
+      ===================================== */}
+
       {activeTab === 'store' && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 rounded-2xl border shadow-xs space-y-4"
+          style={cardStyle}
+        >
+          <h3
+            className="text-sm font-bold pb-2 border-b"
+            style={{
+              color: 'var(--theme-text-main)',
+              borderColor: 'var(--theme-border)'
+            }}
+          >
             Store Identity & Registration Details
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Store / Legal Trade Name *</label>
+              {renderLabel('Store / Legal Trade Name *')}
+
               <input
                 type="text"
                 value={formData.store.storeName}
                 onChange={(e) => handleStoreChange('storeName', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Tagline / Brand Slogan</label>
+              {renderLabel('Tagline / Brand Slogan')}
+
               <input
                 type="text"
                 value={formData.store.tagline}
                 onChange={(e) => handleStoreChange('tagline', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1">Full Showroom Address *</label>
+              {renderLabel('Full Showroom Address *')}
+
               <input
                 type="text"
                 value={formData.store.address}
                 onChange={(e) => handleStoreChange('address', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">City</label>
+              {renderLabel('City')}
+
               <input
                 type="text"
                 value={formData.store.city}
                 onChange={(e) => handleStoreChange('city', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">State & State Code</label>
+              {renderLabel('State & State Code')}
+
               <div className="grid grid-cols-3 gap-2">
                 <input
                   type="text"
                   value={formData.store.state}
                   onChange={(e) => handleStoreChange('state', e.target.value)}
-                  className="col-span-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                  className={`col-span-2 ${formInputClass}`}
+                  style={inputStyle}
                 />
+
                 <input
                   type="text"
                   placeholder="33"
                   value={formData.store.stateCode}
                   onChange={(e) => handleStoreChange('stateCode', e.target.value)}
-                  className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-center focus:outline-hidden focus:border-indigo-500"
+                  className={`${formInputClass} text-center`}
+                  style={inputStyle}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Phone / WhatsApp Numbers</label>
+              {renderLabel('Phone / WhatsApp Numbers')}
+
               <input
                 type="text"
                 value={formData.store.phone}
                 onChange={(e) => handleStoreChange('phone', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Store Email</label>
+              {renderLabel('Store Email')}
+
               <input
                 type="email"
                 value={formData.store.email}
                 onChange={(e) => handleStoreChange('email', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">GSTIN Number *</label>
+              {renderLabel('GSTIN Number *')}
+
               <input
                 type="text"
                 value={formData.store.gstin}
                 onChange={(e) => handleStoreChange('gstin', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono uppercase font-semibold focus:outline-hidden focus:border-indigo-500"
+                className={`${formInputClass} font-mono uppercase font-semibold`}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">PAN Card Number</label>
+              {renderLabel('PAN Card Number')}
+
               <input
                 type="text"
                 value={formData.store.pan}
                 onChange={(e) => handleStoreChange('pan', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono uppercase font-semibold focus:outline-hidden focus:border-indigo-500"
+                className={`${formInputClass} font-mono uppercase font-semibold`}
+                style={inputStyle}
               />
             </div>
           </div>
@@ -586,7 +780,8 @@ export const Settings = () => {
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+              className="px-5 py-2 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+              style={{ backgroundColor: 'var(--theme-primary)' }}
             >
               Save Store Profile
             </button>
@@ -594,40 +789,60 @@ export const Settings = () => {
         </form>
       )}
 
-      {/* TAB 3: BILLING & INVOICE TEMPLATE */}
+      {/* =====================================
+          TAB 3: BILLING & INVOICE TEMPLATE
+      ===================================== */}
+
       {activeTab === 'billing' && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 rounded-2xl border shadow-xs space-y-4"
+          style={cardStyle}
+        >
+          <h3
+            className="text-sm font-bold pb-2 border-b"
+            style={{
+              color: 'var(--theme-text-main)',
+              borderColor: 'var(--theme-border)'
+            }}
+          >
             Invoice Numbering & Tax Settings
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Invoice Prefix</label>
+              {renderLabel('Invoice Prefix')}
+
               <input
                 type="text"
                 value={formData.billing.invoicePrefix}
                 onChange={(e) => handleBillingChange('invoicePrefix', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold focus:outline-hidden focus:border-indigo-500"
+                className={`${formInputClass} font-mono font-bold`}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Next Sequence #</label>
+              {renderLabel('Next Sequence #')}
+
               <input
                 type="number"
                 value={formData.billing.nextSequence}
                 onChange={(e) => handleBillingChange('nextSequence', Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold focus:outline-hidden focus:border-indigo-500"
+                className={`${formInputClass} font-mono font-bold`}
+                style={inputStyle}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Default GST Rate (%)</label>
+              {renderLabel('Default GST Rate (%)')}
+
               <select
                 value={formData.billing.defaultGSTRate}
                 onChange={(e) => handleBillingChange('defaultGSTRate', Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:outline-hidden focus:border-indigo-500"
+                className={`${formInputClass} font-bold`}
+                style={inputStyle}
               >
                 <option value={0}>0% (Exempt)</option>
                 <option value={5}>5% (Apparel & Sarees &lt; ₹1,000)</option>
@@ -637,17 +852,26 @@ export const Settings = () => {
             </div>
           </div>
 
-          <h3 className="text-sm font-bold text-slate-900 pt-3 pb-2 border-b border-slate-100">
+          <h3
+            className="text-sm font-bold pt-3 pb-2 border-b"
+            style={{
+              color: 'var(--theme-text-main)',
+              borderColor: 'var(--theme-border)'
+            }}
+          >
             Counter Workflow & Thermal Printer
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Default Paper Size</label>
+              {renderLabel('Default Paper Size')}
+
               <select
                 value={formData.billing.defaultPaperSize}
                 onChange={(e) => handleBillingChange('defaultPaperSize', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               >
                 <option value="80mm">80mm Thermal Receipt (ESC/POS Standard)</option>
                 <option value="58mm">58mm Thermal Receipt (Compact)</option>
@@ -656,11 +880,13 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Pricing Mode</label>
+              {renderLabel('Pricing Mode')}
+
               <select
                 value={formData.billing.pricingMode}
                 onChange={(e) => handleBillingChange('pricingMode', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               >
                 <option value="inclusive">Tax Inclusive (MRP includes GST)</option>
                 <option value="exclusive">Tax Exclusive (GST added at bill end)</option>
@@ -668,11 +894,13 @@ export const Settings = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Default Payment Method</label>
+              {renderLabel('Default Payment Method')}
+
               <select
                 value={formData.billing.defaultPaymentMethod}
                 onChange={(e) => handleBillingChange('defaultPaymentMethod', e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+                className={formInputClass}
+                style={inputStyle}
               >
                 <option value="Cash">Cash</option>
                 <option value="UPI">UPI / QR Code</option>
@@ -682,29 +910,34 @@ export const Settings = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Cashier Station Identifier</label>
+            {renderLabel('Cashier Station Identifier')}
+
             <input
               type="text"
               value={formData.billing.cashierName}
               onChange={(e) => handleBillingChange('cashierName', e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+              className={formInputClass}
+              style={inputStyle}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Terms & Conditions (Printed on Invoice Footer)</label>
+            {renderLabel('Terms & Conditions (Printed on Invoice Footer)')}
+
             <textarea
               rows={3}
               value={formData.billing.termsAndConditions}
               onChange={(e) => handleBillingChange('termsAndConditions', e.target.value)}
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-hidden focus:border-indigo-500"
+              className={formInputClass}
+              style={inputStyle}
             />
           </div>
 
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+              className="px-5 py-2 text-white font-bold text-xs rounded-xl shadow-xs transition-colors"
+              style={{ backgroundColor: 'var(--theme-primary)' }}
             >
               Save Billing Settings
             </button>
@@ -712,22 +945,41 @@ export const Settings = () => {
         </form>
       )}
 
-      {/* TAB 4: DEMO DATA MANAGEMENT */}
+      {/* =====================================
+          TAB 4: DEMO DATA MANAGEMENT
+      ===================================== */}
+
       {activeTab === 'demo' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-4">
+        <div
+          className="p-6 rounded-2xl border shadow-xs space-y-4"
+          style={cardStyle}
+        >
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Demo Data Management</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Restore factory demo data (40+ textile products, 20+ customers, 30+ invoices)
+            <h3 className="text-sm font-bold">
+              Demo Data Management
+            </h3>
+
+            <p
+              className="text-xs mt-0.5"
+              style={mutedTextStyle}
+            >
+              Restore factory demo data (40+ textile products, 20+ customers,
+              30+ invoices)
             </p>
           </div>
 
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+
             <div className="text-xs text-amber-900">
-              <h5 className="font-bold">Resetting demo data</h5>
+              <h5 className="font-bold">
+                Resetting demo data
+              </h5>
+
               <p className="mt-0.5 text-amber-700">
-                This will overwrite any newly added products, customers, or bills created during this session and reload the initial demo data set.
+                This will overwrite any newly added products, customers, or
+                bills created during this session and reload the initial
+                demo data set.
               </p>
             </div>
           </div>
@@ -745,7 +997,8 @@ export const Settings = () => {
         </div>
       )}
 
-      {/* Reset Confirmation Dialog */}
+      {/* RESET CONFIRMATION */}
+
       {isResetConfirmOpen && (
         <ConfirmDialog
           isOpen={isResetConfirmOpen}
