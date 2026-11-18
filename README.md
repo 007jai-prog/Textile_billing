@@ -1,16 +1,54 @@
-# React + Vite
+# Textile Store POS & Inventory Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A full-stack, enterprise-grade Textile Retail Billing, Point-of-Sale (POS), and Inventory Management application with 21+ aesthetic themes, multi-device mobile/tablet responsiveness, thermal/A4 tax invoice printing, and Tamil festival promotional campaigns.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```
+Textile_and_Garments/
+├── backend/                  # FastAPI Python Backend
+│   ├── app/                  # Application code (routes, models, services)
+│   ├── run.py                # Server entry point (runs on http://127.0.0.1:8000)
+│   └── requirements.txt      # Python dependencies
+├── frontend/                 # React JS + Vite + Tailwind CSS Frontend
+│   ├── src/                  # Components, pages, context, and styles
+│   ├── public/               # Static assets
+│   ├── index.html            # Entry HTML
+│   ├── package.json          # Frontend dependencies & scripts
+│   └── vite.config.js        # Vite configuration
+├── package.json              # Root helper scripts
+└── README.md
+```
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Run Backend Server (FastAPI)
 
-## Expanding the Oxlint configuration
+```bash
+cd backend
+python run.py
+```
+Backend API will be accessible at `http://127.0.0.1:8000` (Swagger docs at `/docs`).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+### 2. Run Frontend Application (React + Vite)
+
+You can run directly from root or from the `frontend/` folder:
+
+**From Root:**
+```bash
+npm run dev
+```
+
+**Or inside `frontend/`:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend POS interface will be live at `http://localhost:5173`.
+
+### 3. Default Sign-In Credentials
+
+- **Email**: `admin@gmail.com` *(or shorthand username: `admin`)*
+- **Password**: `admin`
+- **Role**: Store Owner (`ChennaSilks Showroom`)

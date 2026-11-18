@@ -1,31 +1,40 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 
 class VariantModel(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     id: Optional[str] = None
-    size: str
-    color: str
+    size: Optional[str] = "Free Size"
+    color: Optional[str] = "Standard"
     hex: Optional[str] = "#000000"
-    sku: str
+    sku: Optional[str] = ""
     barcode: Optional[str] = ""
-    price: float = Field(..., ge=0)
-    mrp: Optional[float] = Field(0, ge=0)
+    price: float = Field(0.0, ge=0)
+    mrp: Optional[float] = Field(0.0, ge=0)
+    priceOverride: Optional[bool] = False
+    mrpOverride: Optional[bool] = False
 
 class ProductCreate(BaseModel):
-    name: str = Field(..., min_length=2)
-    category: str
-    fabric: Optional[str] = "100% Combed Cotton"
+    model_config = ConfigDict(extra="allow")
+
+    id: Optional[str] = None
+    name: str = Field(..., min_length=1)
+    category: Optional[str] = "Sarees"
+    fabric: Optional[str] = "Kanchipuram Silk"
     brand: Optional[str] = ""
     hsn: Optional[str] = "5007"
     price: Optional[float] = Field(0.0, ge=0)
     mrp: Optional[float] = Field(0.0, ge=0)
-    gstRate: float = Field(5.0, ge=0)
+    gstRate: Optional[float] = Field(5.0, ge=0)
     description: Optional[str] = ""
     image_url: Optional[str] = ""
     status: Optional[str] = "active"
     variants: List[VariantModel] = []
 
 class ProductUpdate(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     name: Optional[str] = None
     category: Optional[str] = None
     fabric: Optional[str] = None
@@ -40,19 +49,21 @@ class ProductUpdate(BaseModel):
     variants: Optional[List[VariantModel]] = None
 
 class ProductResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     id: str
-    store_id: str
+    store_id: Optional[str] = ""
     name: str
-    category: str
+    category: Optional[str] = "General"
     fabric: Optional[str] = ""
     brand: Optional[str] = ""
-    hsn: Optional[str] = ""
-    price: float
-    mrp: Optional[float] = 0
-    gstRate: float
+    hsn: Optional[str] = "5007"
+    price: float = 0.0
+    mrp: Optional[float] = 0.0
+    gstRate: float = 5.0
     description: Optional[str] = ""
     image_url: Optional[str] = ""
-    status: str
-    variants: List[VariantModel]
+    status: Optional[str] = "active"
+    variants: List[VariantModel] = []
     created_at: Optional[str] = None
     updated_at: Optional[str] = None

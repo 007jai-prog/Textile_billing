@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../common/Modal';
@@ -17,7 +18,7 @@ const createDefaultFormData = () => ({
   variants: [
     {
       id: `v-${Date.now()}-1`,
-      sku: `TX-${Date.now().toString().slice(-4)}-FS`,
+      sku: `TX-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 899 + 100)}`,
       barcode: '',
       size: 'Free Size',
       color: 'Classic Red',
@@ -33,6 +34,36 @@ const createDefaultFormData = () => ({
 const toNonNegativeNumber = (value) => {
   const number = Number(value);
   return Number.isFinite(number) ? Math.max(0, number) : 0;
+};
+
+const getSubmitError = (error) => {
+  const detail = error?.response?.data?.detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        const field = Array.isArray(item.loc)
+          ? item.loc[item.loc.length - 1]
+          : 'Field';
+
+        return `${field}: ${item.msg || 'Invalid value'}`;
+      })
+      .join(', ');
+  }
+
+  if (typeof detail === 'string') {
+    return detail;
+  }
+
+  if (typeof error?.response?.data?.message === 'string') {
+    return error.response.data.message;
+  }
+
+  if (!error?.response) {
+    return 'Unable to connect to the backend. Check whether your FastAPI server is running.';
+  }
+
+  return error.message || 'Failed to save product. Please try again.';
 };
 
 const normalizeVariant = (variant, productPrice, productMrp, index) => {
@@ -58,12 +89,23 @@ const normalizeVariant = (variant, productPrice, productMrp, index) => {
   };
 };
 
-export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
+export const ProductModal = ({
+  isOpen,
+  onClose,
+  productToEdit,
+  onSave,
+}) => {
   const isEditing = Boolean(productToEdit);
+
   const [formData, setFormData] = useState(createDefaultFormData);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
+
+    setSubmitError('');
+    setIsSubmitting(false);
 
     if (!productToEdit) {
       setFormData(createDefaultFormData());
@@ -80,7 +122,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
       mrp: productMrp,
       gstRate: productToEdit.gstRate ?? 5,
       variants: (productToEdit.variants || []).map((variant, index) =>
-        normalizeVariant(variant, productPrice, productMrp, index),
+        normalizeVariant(variant, productPrice, productMrp, index)
       ),
     });
   }, [productToEdit, isOpen]);
@@ -95,7 +137,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
         updated.variants = previous.variants.map((variant) =>
           variant.priceOverride
             ? variant
-            : { ...variant, price: value },
+            : { ...variant, price: value }
         );
       }
 
@@ -103,7 +145,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
         updated.variants = previous.variants.map((variant) =>
           variant.mrpOverride
             ? variant
-            : { ...variant, mrp: value },
+            : { ...variant, mrp: value }
         );
       }
 
@@ -113,7 +155,8 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
 
   const handleAddVariant = () => {
     setFormData((previous) => {
-      const suffix = Date.now().toString().slice(-5);
+      const suffix = Date.now().toString().slice(-6);
+      const rand = Math.floor(Math.random() * 899 + 100);
       const nextIndex = previous.variants.length + 1;
 
       return {
@@ -122,10 +165,10 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
           ...previous.variants,
           {
             id: `v-${Date.now()}-${nextIndex}`,
-            sku: `TX-${suffix}-${nextIndex}`,
+            sku: `TX-${suffix}-${rand}`,
             barcode: '',
             size: 'M',
-            color: '',
+            color: 'Classic',
             hex: '#6366f1',
             price: toNonNegativeNumber(previous.price),
             mrp: toNonNegativeNumber(previous.mrp),
@@ -143,7 +186,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
       variants: previous.variants.map((variant, variantIndex) =>
         variantIndex === index
           ? { ...variant, [field]: value }
-          : variant,
+          : variant
       ),
     }));
   };
@@ -184,21 +227,25 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
     setFormData((previous) => ({
       ...previous,
       variants: previous.variants.filter(
-        (_, variantIndex) => variantIndex !== index,
+        (_, variantIndex) => variantIndex !== index
       ),
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (isSubmitting) return;
+
+    setSubmitError('');
+
     if (!formData.name.trim()) {
-      window.alert('Product name is required.');
+      setSubmitError('Product name is required.');
       return;
     }
 
     if (formData.variants.length === 0) {
-      window.alert('Add at least one product variant.');
+      setSubmitError('Add at least one product variant.');
       return;
     }
 
@@ -212,14 +259,18 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
       price: productPrice,
       mrp: productMrp,
       gstRate: toNonNegativeNumber(formData.gstRate),
-      variants: formData.variants.map((variant) => {
+      variants: formData.variants.map((variant, idx) => {
         const priceOverride = variant.priceOverride === true;
         const mrpOverride = variant.mrpOverride === true;
+        const rawSku = String(variant.sku || '').trim();
+        const sku = rawSku || `TX-${Date.now().toString().slice(-6)}-${idx + 1}`;
 
         return {
           ...variant,
-          sku: String(variant.sku || '').trim(),
+          sku,
           barcode: String(variant.barcode || '').trim(),
+          size: variant.size || 'Free Size',
+          color: variant.color || 'Standard',
           priceOverride,
           mrpOverride,
           price: priceOverride
@@ -232,14 +283,24 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
       }),
     };
 
-    onSave(payload);
-    onClose();
+    try {
+      setIsSubmitting(true);
+
+      await onSave(payload);
+
+      onClose();
+    } catch (error) {
+      console.error('Product save failed:', error);
+      setSubmitError(getSubmitError(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={isSubmitting ? () => {} : onClose}
       title={isEditing ? 'Edit Product Catalogue Item' : 'Add New Textile Product'}
       subtitle="Configure pricing, GST rate, product details, and variants"
       maxWidth="max-w-4xl"
@@ -250,6 +311,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               Product Name *
             </label>
+
             <input
               type="text"
               required
@@ -266,6 +328,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               Category
             </label>
+
             <select
               value={formData.category}
               onChange={(event) =>
@@ -289,6 +352,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               Fabric Type
             </label>
+
             <select
               value={formData.fabric}
               onChange={(event) =>
@@ -308,6 +372,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               Brand / Weave House
             </label>
+
             <input
               type="text"
               value={formData.brand || ''}
@@ -323,6 +388,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               HSN / SAC Code
             </label>
+
             <input
               type="text"
               value={formData.hsn || ''}
@@ -340,6 +406,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               Selling Price (₹) *
             </label>
+
             <input
               type="number"
               min="0"
@@ -357,6 +424,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               MRP (₹)
             </label>
+
             <input
               type="number"
               min="0"
@@ -373,6 +441,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <label className="mb-1 block text-[11px] font-bold text-slate-700">
               GST Rate (%)
             </label>
+
             <select
               value={formData.gstRate}
               onChange={(event) =>
@@ -380,9 +449,9 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
               }
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold focus:border-indigo-500 focus:outline-none"
             >
-              <option value="5">5% (Apparel &amp; Fabric &lt; ₹1,000)</option>
+              <option value="5">5% (Apparel & Fabric &lt; ₹1,000)</option>
               <option value="12">12% (Apparel &gt; ₹1,000 / Home)</option>
-              <option value="18">18% (Luxury &amp; Tailoring)</option>
+              <option value="18">18% (Luxury & Tailoring)</option>
               <option value="0">0% (Nil)</option>
             </select>
           </div>
@@ -394,6 +463,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
                 Product Variants ({formData.variants.length})
               </h4>
+
               <p className="text-[11px] text-slate-500">
                 Variants use the product price by default. Enable an override
                 only when a variant has a different price.
@@ -403,7 +473,8 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
             <button
               type="button"
               onClick={handleAddVariant}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+              disabled={isSubmitting}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:opacity-50"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Variant
@@ -421,6 +492,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                     <label className="mb-1 block text-[10px] font-semibold text-slate-500">
                       Size
                     </label>
+
                     <input
                       type="text"
                       value={variant.size || ''}
@@ -436,6 +508,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                     <label className="mb-1 block text-[10px] font-semibold text-slate-500">
                       Colour
                     </label>
+
                     <input
                       type="text"
                       value={variant.color || ''}
@@ -451,6 +524,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                     <label className="mb-1 block text-[10px] font-semibold text-slate-500">
                       SKU
                     </label>
+
                     <input
                       type="text"
                       value={variant.sku || ''}
@@ -466,6 +540,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                     <label className="mb-1 block text-[10px] font-semibold text-slate-500">
                       Barcode
                     </label>
+
                     <input
                       type="text"
                       value={variant.barcode || ''}
@@ -488,7 +563,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                           toggleVariantOverride(
                             index,
                             'priceOverride',
-                            event.target.checked,
+                            event.target.checked
                           )
                         }
                       />
@@ -499,7 +574,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                       type="number"
                       min="0"
                       step="0.01"
-                      disabled={!variant.priceOverride}
+                      disabled={!variant.priceOverride || isSubmitting}
                       value={
                         variant.priceOverride
                           ? variant.price
@@ -522,7 +597,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                           toggleVariantOverride(
                             index,
                             'mrpOverride',
-                            event.target.checked,
+                            event.target.checked
                           )
                         }
                       />
@@ -533,7 +608,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                       type="number"
                       min="0"
                       step="0.01"
-                      disabled={!variant.mrpOverride}
+                      disabled={!variant.mrpOverride || isSubmitting}
                       value={
                         variant.mrpOverride
                           ? variant.mrp
@@ -552,7 +627,7 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
                   <button
                     type="button"
                     onClick={() => handleRemoveVariant(index)}
-                    disabled={formData.variants.length <= 1}
+                    disabled={formData.variants.length <= 1 || isSubmitting}
                     className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
                     title="Remove variant"
                   >
@@ -565,20 +640,33 @@ export const ProductModal = ({ isOpen, onClose, productToEdit, onSave }) => {
           </div>
         </section>
 
+        {submitError && (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            <p className="font-bold mb-1">Product could not be saved</p>
+            <p>{submitError}</p>
+          </div>
+        )}
+
         <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200"
+            disabled={isSubmitting}
+            className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
 
           <button
             type="submit"
-            className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-indigo-700"
+            disabled={isSubmitting}
+            className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isEditing ? 'Save Product Changes' : 'Create Product'}
+            {isSubmitting
+              ? 'Saving...'
+              : isEditing
+                ? 'Save Product Changes'
+                : 'Create Product'}
           </button>
         </div>
       </form>

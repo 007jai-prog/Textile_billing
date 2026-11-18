@@ -88,9 +88,106 @@ def seed_default_admin(db):
                     "appearance": {"theme": "light"},
                     "created_at": now_iso
                 })
+            seed_initial_products(db, store_id)
             logger.info("Default admin user (admin@gmail.com / admin) seeded successfully.")
     except Exception as e:
         logger.error(f"Error seeding default admin: {e}")
+
+def seed_initial_products(db, store_id: str):
+    try:
+        if db.products.count_documents({"store_id": store_id}) > 0:
+            return
+
+        from datetime import datetime, timezone
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        initial_products = [
+            {
+                "store_id": store_id,
+                "name": "Kanchipuram Pure Silk Wedding Saree",
+                "category": "Sarees",
+                "fabric": "Kanchipuram Silk",
+                "brand": "ChennaSilks Heritage",
+                "hsn": "5007",
+                "price": 15499.0,
+                "mrp": 18500.0,
+                "gstRate": 5.0,
+                "description": "Traditional zari rich pallu saree with authentic temple border design.",
+                "image_url": "",
+                "status": "active",
+                "created_at": now_iso,
+                "updated_at": now_iso,
+                "variants": [
+                    {"id": "v-init-101", "sku": "KPS-MRN-FS", "barcode": "890100100101", "size": "Free Size", "color": "Maroon Gold", "hex": "#800000", "price": 15499.0, "mrp": 18500.0},
+                    {"id": "v-init-102", "sku": "KPS-PEA-FS", "barcode": "890100100102", "size": "Free Size", "color": "Peacock Blue", "hex": "#005f73", "price": 15499.0, "mrp": 18500.0},
+                ]
+            },
+            {
+                "store_id": store_id,
+                "name": "Pure Linen Casual Shirt",
+                "category": "Men's Casual",
+                "fabric": "Linen",
+                "brand": "ChennaSilks Club",
+                "hsn": "6205",
+                "price": 1899.0,
+                "mrp": 2499.0,
+                "gstRate": 5.0,
+                "description": "Breathable pure linen slim-fit collared shirt.",
+                "image_url": "",
+                "status": "active",
+                "created_at": now_iso,
+                "updated_at": now_iso,
+                "variants": [
+                    {"id": "v-init-103", "sku": "LIN-SHT-WHT-M", "barcode": "890100100103", "size": "M", "color": "Crisp White", "hex": "#f8fafc", "price": 1899.0, "mrp": 2499.0},
+                    {"id": "v-init-104", "sku": "LIN-SHT-WHT-L", "barcode": "890100100104", "size": "L", "color": "Crisp White", "hex": "#f8fafc", "price": 1899.0, "mrp": 2499.0},
+                    {"id": "v-init-105", "sku": "LIN-SHT-SKY-M", "barcode": "890100100105", "size": "M", "color": "Sky Blue", "hex": "#38bdf8", "price": 1899.0, "mrp": 2499.0},
+                ]
+            },
+            {
+                "store_id": store_id,
+                "name": "Traditional Cotton Dhoti with Mayilkann Border",
+                "category": "Dhotis & Veshtis",
+                "fabric": "100% Combed Cotton",
+                "brand": "ChennaSilks Heritage",
+                "hsn": "5208",
+                "price": 899.0,
+                "mrp": 1200.0,
+                "gstRate": 5.0,
+                "description": "8 Muzham pure cotton traditional dhoti with peacock gold zari border.",
+                "image_url": "",
+                "status": "active",
+                "created_at": now_iso,
+                "updated_at": now_iso,
+                "variants": [
+                    {"id": "v-init-106", "sku": "DHT-MYL-9X5", "barcode": "890100100106", "size": "9 x 5 (Double)", "color": "Off White Gold", "hex": "#fef08a", "price": 899.0, "mrp": 1200.0},
+                ]
+            },
+            {
+                "store_id": store_id,
+                "name": "Chanderi Silk Anarkali Kurti",
+                "category": "Women's Kurtis",
+                "fabric": "Chanderi Silk",
+                "brand": "ChennaSilks Heritage",
+                "hsn": "6204",
+                "price": 2499.0,
+                "mrp": 3299.0,
+                "gstRate": 5.0,
+                "description": "Graceful printed floral Chanderi silk kurti with hand embroidered yoke.",
+                "image_url": "",
+                "status": "active",
+                "created_at": now_iso,
+                "updated_at": now_iso,
+                "variants": [
+                    {"id": "v-init-107", "sku": "CHK-FLR-M", "barcode": "890100100107", "size": "M", "color": "Mustard Yellow", "hex": "#eab308", "price": 2499.0, "mrp": 3299.0},
+                    {"id": "v-init-108", "sku": "CHK-FLR-L", "barcode": "890100100108", "size": "L", "color": "Mustard Yellow", "hex": "#eab308", "price": 2499.0, "mrp": 3299.0},
+                ]
+            }
+        ]
+
+        db.products.insert_many(initial_products)
+        logger.info(f"Seeded {len(initial_products)} initial textile products.")
+    except Exception as err:
+        logger.error(f"Error seeding products: {err}")
 
 def initialize_memory_store():
     if db_instance.db is None:

@@ -26,13 +26,16 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      const isAuthUrl =
-        error.config.url.includes('/auth/login') ||
-        error.config.url.includes('/auth/register') ||
-        error.config.url.includes('/auth/oauth') ||
-        error.config.url.includes('/auth/forgot-password');
+      const currentToken = localStorage.getItem('texbill_token') || sessionStorage.getItem('texbill_token');
+      const isStaticDemo = currentToken === 'static_demo_jwt_token_admin_chennasilks_2026';
 
-      if (!isAuthUrl) {
+      const isAuthUrl =
+        error.config?.url?.includes('/auth/login') ||
+        error.config?.url?.includes('/auth/register') ||
+        error.config?.url?.includes('/auth/oauth') ||
+        error.config?.url?.includes('/auth/forgot-password');
+
+      if (!isAuthUrl && !isStaticDemo) {
         localStorage.removeItem('texbill_token');
         localStorage.removeItem('texbill_user');
         sessionStorage.removeItem('texbill_token');

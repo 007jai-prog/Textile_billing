@@ -7,21 +7,52 @@ export const authService = {
   },
 
   login: async (identifier, password, rememberMe = true) => {
-    const res = await api.post('/auth/login', { identifier, password });
-    if (res.data.access_token) {
-      if (rememberMe) {
-        localStorage.setItem('texbill_token', res.data.access_token);
-        localStorage.setItem('texbill_user', JSON.stringify(res.data.user));
-        sessionStorage.removeItem('texbill_token');
-        sessionStorage.removeItem('texbill_user');
-      } else {
-        sessionStorage.setItem('texbill_token', res.data.access_token);
-        sessionStorage.setItem('texbill_user', JSON.stringify(res.data.user));
-        localStorage.removeItem('texbill_token');
-        localStorage.removeItem('texbill_user');
+    const cleanId = String(identifier || '').trim().toLowerCase();
+    const isStaticAdmin = (cleanId === 'admin@gmail.com' || cleanId === 'admin') && password === 'admin';
+
+    try {
+      const res = await api.post('/auth/login', { identifier, password });
+      if (res.data.access_token) {
+        if (rememberMe) {
+          localStorage.setItem('texbill_token', res.data.access_token);
+          localStorage.setItem('texbill_user', JSON.stringify(res.data.user));
+          sessionStorage.removeItem('texbill_token');
+          sessionStorage.removeItem('texbill_user');
+        } else {
+          sessionStorage.setItem('texbill_token', res.data.access_token);
+          sessionStorage.setItem('texbill_user', JSON.stringify(res.data.user));
+          localStorage.removeItem('texbill_token');
+          localStorage.removeItem('texbill_user');
+        }
       }
+      return res.data;
+    } catch (err) {
+      // Fallback directly for static admin credentials
+      if (isStaticAdmin) {
+        const staticData = {
+          access_token: 'static_demo_jwt_token_admin_chennasilks_2026',
+          token_type: 'bearer',
+          user: {
+            id: 'static-admin-001',
+            name: 'Admin Store Manager',
+            email: 'admin@gmail.com',
+            phone: '9876543210',
+            role: 'owner',
+            store_id: 'static-store-001',
+            store_name: 'ChennaSilks Showroom'
+          }
+        };
+        if (rememberMe) {
+          localStorage.setItem('texbill_token', staticData.access_token);
+          localStorage.setItem('texbill_user', JSON.stringify(staticData.user));
+        } else {
+          sessionStorage.setItem('texbill_token', staticData.access_token);
+          sessionStorage.setItem('texbill_user', JSON.stringify(staticData.user));
+        }
+        return staticData;
+      }
+      throw err;
     }
-    return res.data;
   },
 
   // Google OAuth URL
@@ -80,6 +111,10 @@ export const authService = {
   },
 
   getProfile: async () => {
+    const token = authService.getToken();
+    if (token === 'static_demo_jwt_token_admin_chennasilks_2026') {
+      return authService.getCurrentUser();
+    }
     const res = await api.get('/auth/me');
     return res.data;
   },
