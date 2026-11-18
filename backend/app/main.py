@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+
 from app.database.connection import (
     initialize_memory_store,
     close_memory_store
@@ -35,13 +36,13 @@ logger = logging.getLogger("texbill_api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 
-    logger.info("Initializing Textile POS Billing Backend...")
+    logger.info("Initializing Textile POS Backend...")
 
     initialize_memory_store()
 
     yield
 
-    logger.info("Shutting down Textile POS Billing Backend...")
+    logger.info("Shutting down Textile POS Backend...")
 
     close_memory_store()
 
@@ -57,7 +58,7 @@ app = FastAPI(
 )
 
 
-# CORS Middleware
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -67,7 +68,7 @@ app.add_middleware(
 )
 
 
-# Register API Routers under /api/v1 and /api
+# Register API Routers
 for prefix in ["/api/v1", "/api"]:
 
     app.include_router(auth.router, prefix=prefix)
