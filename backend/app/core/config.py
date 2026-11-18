@@ -1,24 +1,28 @@
+
 from typing import List
-from pydantic_settings import BaseSettings
-import os
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
 
 # Path to .env inside backend
 ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
 
+
 class Settings(BaseSettings):
+
     DATABASE_NAME: str = "texbill_db"
-    JWT_SECRET: str = "super_secret_jwt_key_texbill_retail_pos_2026_dev_prod"
+
+    JWT_SECRET: str = "change_this_to_a_secure_secret"
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
-    HOST: str = "127.0.0.1"
+
+    HOST: str = "0.0.0.0"
     PORT: int = 8000
+
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://localhost:4173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
-        "*"
     ]
 
     # Google OAuth 2.0 / OpenID Connect credentials
@@ -32,8 +36,11 @@ class Settings(BaseSettings):
     # Redirect URI for frontend callback
     OAUTH_FRONTEND_REDIRECT_URI: str = "http://localhost:5173/auth/callback"
 
-    class Config:
-        env_file = str(ENV_PATH)
-        extra = "allow"
+    model_config = SettingsConfigDict(
+        env_file=str(ENV_PATH),
+        extra="allow",
+        case_sensitive=True
+    )
+
 
 settings = Settings()
