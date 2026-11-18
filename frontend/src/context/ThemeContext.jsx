@@ -21,6 +21,10 @@ const MODE_STORAGE_KEY = 'texbill_app_mode';
 const DEFAULT_THEME_ID = 'default';
 const DEFAULT_MODE = 'light';
 
+// -----------------------------------------
+// GET VALID THEME
+// -----------------------------------------
+
 const getValidTheme = (themeId) => {
   try {
     const theme = getThemeById(themeId);
@@ -35,6 +39,11 @@ const getValidTheme = (themeId) => {
   return getThemeById(DEFAULT_THEME_ID);
 };
 
+// -----------------------------------------
+// GET SAVED MODE
+// Never read the device's system theme.
+// -----------------------------------------
+
 const getSavedMode = () => {
   try {
     const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
@@ -45,7 +54,11 @@ const getSavedMode = () => {
   }
 };
 
-const ThemeProvider = ({ children }) => {
+// -----------------------------------------
+// THEME PROVIDER
+// -----------------------------------------
+
+export const ThemeProvider = ({ children }) => {
   const { user } = useAuth();
 
   const {
@@ -55,7 +68,7 @@ const ThemeProvider = ({ children }) => {
   } = useApp();
 
   // -----------------------------------------
-  // THEME MODE
+  // MODE
   // -----------------------------------------
 
   const [mode, setModeState] = useState(getSavedMode);
@@ -72,13 +85,16 @@ const ThemeProvider = ({ children }) => {
         );
 
         if (savedUserTheme) {
-          return savedUserTheme;
+          return getValidTheme(savedUserTheme).id;
         }
       }
 
       const savedGlobalTheme = localStorage.getItem(THEME_STORAGE_KEY);
 
-      return savedGlobalTheme || DEFAULT_THEME_ID;
+      return savedGlobalTheme
+        ? getValidTheme(savedGlobalTheme).id
+        : DEFAULT_THEME_ID;
+
     } catch {
       return DEFAULT_THEME_ID;
     }
@@ -92,6 +108,7 @@ const ThemeProvider = ({ children }) => {
 
   // -----------------------------------------
   // SYNC WITH BACKEND SETTINGS
+  // Backend appearance settings take priority.
   // -----------------------------------------
 
   useEffect(() => {
@@ -125,9 +142,10 @@ const ThemeProvider = ({ children }) => {
       try {
         localStorage.setItem(MODE_STORAGE_KEY, savedMode);
       } catch (error) {
-        console.warn('Unable to save theme mode locally:', error);
+        console.warn('Unable to save mode locally:', error);
       }
     }
+
   }, [
     settings?.appearance?.theme,
     settings?.appearance?.mode,
@@ -150,19 +168,22 @@ const ThemeProvider = ({ children }) => {
   );
 
   // -----------------------------------------
-  // APPLY CSS VARIABLES
+  // APPLY SELECTED THEME TO WEBSITE
   // -----------------------------------------
 
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
 
+    // Use only the mode selected inside the POS application.
+    // Never use window.matchMedia or prefers-color-scheme.
+
     const colorTokens =
       mode === 'dark' && activeTheme.dark
         ? activeTheme.dark
         : activeTheme.colors;
 
-    // Theme colour variables
+    // CSS theme variables
 
     const themeVariables = {
       '--theme-primary': colorTokens.primary,
@@ -188,7 +209,7 @@ const ThemeProvider = ({ children }) => {
       '--theme-accent': colorTokens.accent
     };
 
-    // Apply variables to the root element
+    // Apply all theme variables
 
     Object.entries(themeVariables).forEach(([property, value]) => {
       if (value) {
@@ -196,27 +217,23 @@ const ThemeProvider = ({ children }) => {
       }
     });
 
-    // Apply theme attributes
+    // Set selected theme and mode
 
     root.setAttribute('data-theme', activeTheme.id);
     root.setAttribute('data-mode', mode);
 
-    // Ensure browser controls follow the selected mode
+    // Control native browser elements using app mode
 
     root.style.colorScheme = mode;
 
-    // Apply the main page background and text colours
+    // Apply body colours
 
     body.style.backgroundColor = colorTokens.bgMain;
     body.style.color = colorTokens.textMain;
 
-    // Apply dark mode class for Tailwind dark variants
+    // Tailwind class-based dark mode
 
-    if (mode === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    root.classList.toggle('dark', mode === 'dark');
 
   }, [activeTheme, mode]);
 
@@ -252,7 +269,7 @@ const ThemeProvider = ({ children }) => {
     setCurrentThemeId(theme.id);
     setPreviewThemeId(null);
 
-    // Save locally as a fallback
+    // Save locally
 
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme.id);
@@ -267,8 +284,7 @@ const ThemeProvider = ({ children }) => {
       console.warn('Unable to save theme locally:', error);
     }
 
-    // Persist theme in backend settings
-    // This allows the saved theme to be restored on another device.
+    // Save to backend settings
 
     if (updateSettings && settings) {
       try {
@@ -325,9 +341,11 @@ const ThemeProvider = ({ children }) => {
       return;
     }
 
-    // Update immediately
+    // Immediately update the application appearance
 
     setModeState(newMode);
+
+    // Save locally
 
     try {
       localStorage.setItem(MODE_STORAGE_KEY, newMode);
@@ -335,7 +353,7 @@ const ThemeProvider = ({ children }) => {
       console.warn('Unable to save mode locally:', error);
     }
 
-    // Persist the selected mode in backend settings
+    // Persist selected mode in backend settings
 
     if (updateSettings && settings) {
       try {
@@ -367,7 +385,7 @@ const ThemeProvider = ({ children }) => {
   ]);
 
   // -----------------------------------------
-  // TOGGLE LIGHT / DARK MODE
+  // TOGGLE MODE
   // -----------------------------------------
 
   const toggleMode = useCallback(() => {
@@ -377,7 +395,7 @@ const ThemeProvider = ({ children }) => {
   }, [mode, setMode]);
 
   // -----------------------------------------
-  // CONTEXT PROVIDER
+  // CONTEXT VALUE
   // -----------------------------------------
 
   const contextValue = useMemo(() => ({
@@ -432,5 +450,3 @@ export const useTheme = () => {
 
   return context;
 };
-
-export { ThemeProvider };

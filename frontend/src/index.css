@@ -2,6 +2,13 @@
 @import "tailwindcss";
 
 /* =========================================
+   TAILWIND DARK MODE
+   Follow POS application theme, not device
+========================================= */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* =========================================
    THEME VARIABLES
 ========================================= */
 
@@ -42,8 +49,13 @@
     color-scheme: light;
   }
 
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     margin: 0;
+
     font-family: -apple-system, BlinkMacSystemFont,
       'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 
@@ -71,58 +83,61 @@
 }
 
 /* =========================================
-   CONSISTENT INPUT STYLING
+   CONSISTENT THEME-AWARE INPUT STYLING
 ========================================= */
 
 input,
 textarea,
 select {
-  color: #0f172a;
-  background-color: #ffffff;
-  border-color: #cbd5e1;
+  color: var(--theme-text-main);
+  background-color: var(--theme-bg-card);
+  border-color: var(--theme-border);
 
   font-family: inherit;
   font-size: inherit;
 
-  color-scheme: light;
+  color-scheme: inherit;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #94a3b8;
-  opacity: 1;
+  color: var(--theme-text-muted);
+  opacity: 0.85;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  color: #0f172a;
+  color: var(--theme-text-main);
   outline-color: var(--theme-primary);
 }
 
 select option {
-  color: #0f172a;
-  background-color: #ffffff;
+  color: var(--theme-text-main);
+  background-color: var(--theme-bg-card);
 }
 
 input:disabled,
 textarea:disabled,
 select:disabled {
-  background-color: #f1f5f9;
-  color: #64748b;
-  opacity: 1;
+  background-color: var(--theme-bg-main);
+  color: var(--theme-text-muted);
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
-/* Browser autofill consistency */
+/* =========================================
+   BROWSER AUTOFILL CONSISTENCY
+========================================= */
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 select:-webkit-autofill {
-  -webkit-text-fill-color: #0f172a;
-  caret-color: #0f172a;
+  -webkit-text-fill-color: var(--theme-text-main);
+  caret-color: var(--theme-text-main);
+
   transition: background-color 9999s ease-in-out 0s;
 }
 
@@ -181,6 +196,7 @@ select:-webkit-autofill {
 
 .focus-ring-theme:focus {
   outline: none;
+
   box-shadow:
     0 0 0 2px var(--theme-bg-card),
     0 0 0 4px var(--theme-primary) !important;
