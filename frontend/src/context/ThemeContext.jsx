@@ -1,173 +1,436 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo
+} from 'react';
+
 import { THEMES, getThemeById } from '../data/themes';
 import { useAuth } from './AuthContext';
 import { useApp } from './AppContext';
 
-const ThemeContext = createContext();
+const ThemeContext = createContext(null);
 
 const THEME_STORAGE_PREFIX = 'texbill_user_theme_';
+const THEME_STORAGE_KEY = 'texbill_app_theme';
+const MODE_STORAGE_KEY = 'texbill_app_mode';
 
-export const ThemeProvider = ({ children }) => {
+const DEFAULT_THEME_ID = 'default';
+const DEFAULT_MODE = 'light';
+
+const getValidTheme = (themeId) => {
+  try {
+    const theme = getThemeById(themeId);
+
+    if (theme && theme.colors) {
+      return theme;
+    }
+  } catch (error) {
+    console.warn('Unable to load saved theme:', error);
+  }
+
+  return getThemeById(DEFAULT_THEME_ID);
+};
+
+const getSavedMode = () => {
+  try {
+    const savedMode = localStorage.getItem(MODE_STORAGE_KEY);
+
+    return savedMode === 'dark' ? 'dark' : DEFAULT_MODE;
+  } catch {
+    return DEFAULT_MODE;
+  }
+};
+
+const ThemeProvider = ({ children }) => {
   const { user } = useAuth();
-  const { settings, updateSettings, showToast } = useApp();
 
-  // Mode: 'light' or 'dark'
-  const [mode, setMode] = useState(() => {
-    return localStorage.getItem('texbill_app_mode') || 'light';
-  });
+  const {
+    settings,
+    updateSettings,
+    showToast
+  } = useApp();
 
-  // Current saved theme ID
+  // -----------------------------------------
+  // THEME MODE
+  // -----------------------------------------
+
+  const [mode, setModeState] = useState(getSavedMode);
+
+  // -----------------------------------------
+  // CURRENT THEME
+  // -----------------------------------------
+
   const [currentThemeId, setCurrentThemeId] = useState(() => {
-    // 1. User specific preference
-    const savedUserTheme = user?.id ? localStorage.getItem(THEME_STORAGE_PREFIX + user.id) : null;
-    if (savedUserTheme) return savedUserTheme;
+    try {
+      if (user?.id) {
+        const savedUserTheme = localStorage.getItem(
+          THEME_STORAGE_PREFIX + user.id
+        );
 
-    // 2. Global fallback from localStorage
-    const savedGlobal = localStorage.getItem('texbill_app_theme');
-    if (savedGlobal) return savedGlobal;
+        if (savedUserTheme) {
+          return savedUserTheme;
+        }
+      }
 
-    return 'default';
+      const savedGlobalTheme = localStorage.getItem(THEME_STORAGE_KEY);
+
+      return savedGlobalTheme || DEFAULT_THEME_ID;
+    } catch {
+      return DEFAULT_THEME_ID;
+    }
   });
 
-  // Preview theme ID (null when not previewing)
+  // -----------------------------------------
+  // PREVIEW THEME
+  // -----------------------------------------
+
   const [previewThemeId, setPreviewThemeId] = useState(null);
 
-  // Sync with user change or store settings from backend
+  // -----------------------------------------
+  // SYNC WITH BACKEND SETTINGS
+  // -----------------------------------------
+
   useEffect(() => {
-    if (user?.id) {
-      const userTheme = localStorage.getItem(THEME_STORAGE_PREFIX + user.id);
-      if (userTheme) {
-        setCurrentThemeId(userTheme);
-        return;
+    if (!settings?.appearance) return;
+
+    const savedTheme = settings.appearance.theme;
+    const savedMode = settings.appearance.mode;
+
+    if (savedTheme) {
+      const validTheme = getValidTheme(savedTheme);
+
+      setCurrentThemeId(validTheme.id);
+
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, validTheme.id);
+
+        if (user?.id) {
+          localStorage.setItem(
+            THEME_STORAGE_PREFIX + user.id,
+            validTheme.id
+          );
+        }
+      } catch (error) {
+        console.warn('Unable to save theme locally:', error);
       }
     }
 
-    if (settings?.appearance?.theme) {
-      setCurrentThemeId(settings.appearance.theme);
+    if (savedMode === 'light' || savedMode === 'dark') {
+      setModeState(savedMode);
+
+      try {
+        localStorage.setItem(MODE_STORAGE_KEY, savedMode);
+      } catch (error) {
+        console.warn('Unable to save theme mode locally:', error);
+      }
     }
-  }, [user?.id, settings?.appearance?.theme]);
+  }, [
+    settings?.appearance?.theme,
+    settings?.appearance?.mode,
+    user?.id
+  ]);
 
-  // Active theme calculation
+  // -----------------------------------------
+  // ACTIVE THEME
+  // -----------------------------------------
+
   const effectiveThemeId = previewThemeId || currentThemeId;
-  const activeTheme = useMemo(() => getThemeById(effectiveThemeId), [effectiveThemeId]);
-  const isLivePreviewing = Boolean(previewThemeId && previewThemeId !== currentThemeId);
 
-  // Inject CSS Variables on DOM whenever activeTheme or mode changes
+  const activeTheme = useMemo(() => {
+    return getValidTheme(effectiveThemeId);
+  }, [effectiveThemeId]);
+
+  const isLivePreviewing = Boolean(
+    previewThemeId &&
+    previewThemeId !== currentThemeId
+  );
+
+  // -----------------------------------------
+  // APPLY CSS VARIABLES
+  // -----------------------------------------
+
   useEffect(() => {
     const root = document.documentElement;
-    const colorTokens = mode === 'dark' && activeTheme.dark ? activeTheme.dark : activeTheme.colors;
+    const body = document.body;
 
-    // Set CSS custom properties
-    root.style.setProperty('--theme-primary', colorTokens.primary);
-    root.style.setProperty('--theme-primary-hover', colorTokens.primaryHover);
-    root.style.setProperty('--theme-primary-light', colorTokens.primaryLight);
-    root.style.setProperty('--theme-primary-border', colorTokens.primaryBorder);
-    root.style.setProperty('--theme-primary-text', colorTokens.primaryText);
-    root.style.setProperty('--theme-bg-main', colorTokens.bgMain);
-    root.style.setProperty('--theme-bg-card', colorTokens.bgCard);
-    root.style.setProperty('--theme-bg-sidebar', colorTokens.bgSidebar);
-    root.style.setProperty('--theme-sidebar-text', colorTokens.sidebarText);
-    root.style.setProperty('--theme-sidebar-active', colorTokens.sidebarActive);
-    root.style.setProperty('--theme-sidebar-border', colorTokens.sidebarBorder || colorTokens.border);
-    root.style.setProperty('--theme-border', colorTokens.border);
-    root.style.setProperty('--theme-text-main', colorTokens.textMain);
-    root.style.setProperty('--theme-text-muted', colorTokens.textMuted);
-    root.style.setProperty('--theme-accent', colorTokens.accent);
+    const colorTokens =
+      mode === 'dark' && activeTheme.dark
+        ? activeTheme.dark
+        : activeTheme.colors;
 
-    // Set DOM attributes
+    // Theme colour variables
+
+    const themeVariables = {
+      '--theme-primary': colorTokens.primary,
+      '--theme-primary-hover': colorTokens.primaryHover,
+      '--theme-primary-light': colorTokens.primaryLight,
+      '--theme-primary-border': colorTokens.primaryBorder,
+      '--theme-primary-text': colorTokens.primaryText,
+
+      '--theme-bg-main': colorTokens.bgMain,
+      '--theme-bg-card': colorTokens.bgCard,
+      '--theme-bg-sidebar': colorTokens.bgSidebar,
+
+      '--theme-sidebar-text': colorTokens.sidebarText,
+      '--theme-sidebar-active': colorTokens.sidebarActive,
+      '--theme-sidebar-border':
+        colorTokens.sidebarBorder || colorTokens.border,
+
+      '--theme-border': colorTokens.border,
+
+      '--theme-text-main': colorTokens.textMain,
+      '--theme-text-muted': colorTokens.textMuted,
+
+      '--theme-accent': colorTokens.accent
+    };
+
+    // Apply variables to the root element
+
+    Object.entries(themeVariables).forEach(([property, value]) => {
+      if (value) {
+        root.style.setProperty(property, value);
+      }
+    });
+
+    // Apply theme attributes
+
     root.setAttribute('data-theme', activeTheme.id);
     root.setAttribute('data-mode', mode);
+
+    // Ensure browser controls follow the selected mode
+
+    root.style.colorScheme = mode;
+
+    // Apply the main page background and text colours
+
+    body.style.backgroundColor = colorTokens.bgMain;
+    body.style.color = colorTokens.textMain;
+
+    // Apply dark mode class for Tailwind dark variants
 
     if (mode === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
+
   }, [activeTheme, mode]);
 
-  // Set preview theme
+  // -----------------------------------------
+  // PREVIEW THEME
+  // -----------------------------------------
+
   const previewTheme = useCallback((themeId) => {
-    setPreviewThemeId(themeId);
+    const theme = getValidTheme(themeId);
+
+    setPreviewThemeId(theme.id);
   }, []);
 
-  // Revert preview
+  // -----------------------------------------
+  // REVERT PREVIEW
+  // -----------------------------------------
+
   const revertPreview = useCallback(() => {
     setPreviewThemeId(null);
+
     if (showToast) {
       showToast('Theme preview reverted.', 'info');
     }
   }, [showToast]);
 
-  // Save theme permanently
+  // -----------------------------------------
+  // SAVE THEME
+  // -----------------------------------------
+
   const saveTheme = useCallback(async (themeId, isGlobal = false) => {
-    setCurrentThemeId(themeId);
+    const theme = getValidTheme(themeId);
+
+    setCurrentThemeId(theme.id);
     setPreviewThemeId(null);
 
-    // Save in user-specific localStorage
-    if (user?.id) {
-      localStorage.setItem(THEME_STORAGE_PREFIX + user.id, themeId);
-    }
-    localStorage.setItem('texbill_app_theme', themeId);
+    // Save locally as a fallback
 
-    // If admin requested global default, persist in backend store settings
-    if (isGlobal && updateSettings && settings) {
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme.id);
+
+      if (user?.id) {
+        localStorage.setItem(
+          THEME_STORAGE_PREFIX + user.id,
+          theme.id
+        );
+      }
+    } catch (error) {
+      console.warn('Unable to save theme locally:', error);
+    }
+
+    // Persist theme in backend settings
+    // This allows the saved theme to be restored on another device.
+
+    if (updateSettings && settings) {
       try {
         await updateSettings({
           ...settings,
           appearance: {
             ...(settings.appearance || {}),
-            theme: themeId,
-            mode: mode
+            theme: theme.id,
+            mode
           }
         });
+      } catch (error) {
+        console.error('Failed to save theme settings:', error);
+
         if (showToast) {
-          showToast(`Showroom global default theme updated to "${getThemeById(themeId).name}".`, 'success');
+          showToast(
+            'Theme applied locally, but backend saving failed.',
+            'error'
+          );
         }
+
         return;
-      } catch (e) {
-        console.error('Failed to update global theme in settings:', e);
       }
     }
 
     if (showToast) {
-      showToast(`Applied and saved "${getThemeById(themeId).name}" theme!`, 'success');
+      if (isGlobal) {
+        showToast(
+          `Showroom global default theme updated to "${theme.name}".`,
+          'success'
+        );
+      } else {
+        showToast(
+          `Applied and saved "${theme.name}" theme!`,
+          'success'
+        );
+      }
     }
-  }, [user?.id, updateSettings, settings, mode, showToast]);
 
-  // Toggle Mode (light / dark)
+  }, [
+    user?.id,
+    updateSettings,
+    settings,
+    mode,
+    showToast
+  ]);
+
+  // -----------------------------------------
+  // CHANGE LIGHT / DARK MODE
+  // -----------------------------------------
+
+  const setMode = useCallback(async (newMode) => {
+    if (newMode !== 'light' && newMode !== 'dark') {
+      return;
+    }
+
+    // Update immediately
+
+    setModeState(newMode);
+
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, newMode);
+    } catch (error) {
+      console.warn('Unable to save mode locally:', error);
+    }
+
+    // Persist the selected mode in backend settings
+
+    if (updateSettings && settings) {
+      try {
+        await updateSettings({
+          ...settings,
+          appearance: {
+            ...(settings.appearance || {}),
+            theme: currentThemeId,
+            mode: newMode
+          }
+        });
+      } catch (error) {
+        console.error('Failed to save appearance mode:', error);
+
+        if (showToast) {
+          showToast(
+            'Mode changed locally, but backend saving failed.',
+            'error'
+          );
+        }
+      }
+    }
+
+  }, [
+    updateSettings,
+    settings,
+    currentThemeId,
+    showToast
+  ]);
+
+  // -----------------------------------------
+  // TOGGLE LIGHT / DARK MODE
+  // -----------------------------------------
+
   const toggleMode = useCallback(() => {
-    setMode(prev => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('texbill_app_mode', next);
-      return next;
-    });
-  }, []);
+    const nextMode = mode === 'light' ? 'dark' : 'light';
+
+    setMode(nextMode);
+  }, [mode, setMode]);
+
+  // -----------------------------------------
+  // CONTEXT PROVIDER
+  // -----------------------------------------
+
+  const contextValue = useMemo(() => ({
+    themes: THEMES,
+
+    currentThemeId,
+    previewThemeId,
+
+    activeTheme,
+    isLivePreviewing,
+
+    mode,
+    setMode,
+    toggleMode,
+
+    previewTheme,
+    revertPreview,
+    saveTheme
+
+  }), [
+    currentThemeId,
+    previewThemeId,
+    activeTheme,
+    isLivePreviewing,
+    mode,
+    setMode,
+    toggleMode,
+    previewTheme,
+    revertPreview,
+    saveTheme
+  ]);
 
   return (
-    <ThemeContext.Provider
-      value={{
-        themes: THEMES,
-        currentThemeId,
-        previewThemeId,
-        activeTheme,
-        isLivePreviewing,
-        mode,
-        setMode,
-        toggleMode,
-        previewTheme,
-        revertPreview,
-        saveTheme,
-      }}
-    >
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
+// -----------------------------------------
+// CUSTOM THEME HOOK
+// -----------------------------------------
+
 export const useTheme = () => {
   const context = useContext(ThemeContext);
+
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    throw new Error(
+      'useTheme must be used within a ThemeProvider'
+    );
   }
+
   return context;
 };
+
+export { ThemeProvider };
